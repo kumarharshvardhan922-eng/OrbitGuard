@@ -26,10 +26,11 @@ export default function AssamMap({
     const el = elRef.current;
     if (!el) return;
 
-    // Initialize Leaflet map with dark styling
+    // Initialize Leaflet map with dark styling and Canvas acceleration for 60fps
     const map = L.map(el, {
       center: [26.45, 92.85],
       zoom: 7,
+      preferCanvas: true,
       zoomControl: false,
       attributionControl: true,
       maxBounds: [[23.5, 89.0], [29.0, 96.5]],

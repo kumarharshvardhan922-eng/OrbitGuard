@@ -3,12 +3,14 @@ import TopBar from "./components/TopBar.jsx";
 import PrioritySidebar from "./components/PrioritySidebar.jsx";
 import AssamMap from "./components/AssamMap.jsx";
 import TimeScrubber from "./components/TimeScrubber.jsx";
-import ZoneDrawer from "./components/ZoneDrawer.jsx";
-import ModelTrustModal from "./components/ModelTrustModal.jsx";
-import BacktestDemoModal from "./components/BacktestDemoModal.jsx";
-import BriefingModal from "./components/BriefingModal.jsx";
-import CommandPalette from "./components/CommandPalette.jsx";
-import HeroLanding from "./components/HeroLanding.jsx";
+
+// Performance code-split heavy modal and canvas components
+const ZoneDrawer = lazy(() => import("./components/ZoneDrawer.jsx"));
+const ModelTrustModal = lazy(() => import("./components/ModelTrustModal.jsx"));
+const BacktestDemoModal = lazy(() => import("./components/BacktestDemoModal.jsx"));
+const BriefingModal = lazy(() => import("./components/BriefingModal.jsx"));
+const CommandPalette = lazy(() => import("./components/CommandPalette.jsx"));
+const HeroLanding = lazy(() => import("./components/HeroLanding.jsx"));
 
 import {
   fetchDashboard,
@@ -250,7 +252,11 @@ export default function App() {
   const leadWording = dash?.lead_wording || (lead === "1_month" ? "1-Month Risk Outlook" : "Same-Month Risk Assessment");
 
   if (showHero) {
-    return <HeroLanding onLaunch={() => setShowHero(false)} />;
+    return (
+      <Suspense fallback={<div className="h-screen w-screen bg-[#070c18] flex items-center justify-center text-cyan font-mono text-sm">INITIALIZING ORBITAL SENSORS...</div>}>
+        <HeroLanding onLaunch={() => setShowHero(false)} />
+      </Suspense>
+    );
   }
 
   return (
@@ -468,52 +474,64 @@ export default function App() {
         </div>
       </footer>
 
-      {/* 5. OVERLAYS, MODALS & DRAWERS */}
-      {/* Zone Detail Drawer */}
-      <ZoneDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        zone={selectedDistrict}
-        period={currentPeriod}
-        onExportBriefing={handleOpenBriefing}
-      />
+      {/* 5. OVERLAYS, MODALS & DRAWERS (Lazy Loaded with Suspense) */}
+      <Suspense fallback={null}>
+        {/* Zone Detail Drawer */}
+        {isDrawerOpen && (
+          <ZoneDrawer
+            isOpen={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            zone={selectedDistrict}
+            period={currentPeriod}
+            onExportBriefing={handleOpenBriefing}
+          />
+        )}
 
-      {/* Model Trust & Pitch Deck Claims Audit Modal */}
-      <ModelTrustModal
-        isOpen={showTrust}
-        onClose={() => setShowTrust(false)}
-      />
+        {/* Model Trust & Pitch Deck Claims Audit Modal */}
+        {showTrust && (
+          <ModelTrustModal
+            isOpen={showTrust}
+            onClose={() => setShowTrust(false)}
+          />
+        )}
 
-      {/* Guided Backtest Story Demo Modal */}
-      <BacktestDemoModal
-        isOpen={showDemo}
-        onClose={() => setShowDemo(false)}
-        onSelectPeriod={(p) => setCurrentPeriod(p)}
-        onSelectDistrict={(id) => {
-          setSelectedId(id);
-          setIsDrawerOpen(true);
-        }}
-      />
+        {/* Guided Backtest Story Demo Modal */}
+        {showDemo && (
+          <BacktestDemoModal
+            isOpen={showDemo}
+            onClose={() => setShowDemo(false)}
+            onSelectPeriod={(p) => setCurrentPeriod(p)}
+            onSelectDistrict={(id) => {
+              setSelectedId(id);
+              setIsDrawerOpen(true);
+            }}
+          />
+        )}
 
-      {/* Printable Emergency Briefing Modal */}
-      <BriefingModal
-        isOpen={showBriefing}
-        onClose={() => setShowBriefing(false)}
-        zone={briefingZone || selectedDistrict}
-        period={currentPeriod}
-      />
+        {/* Printable Emergency Briefing Modal */}
+        {showBriefing && (
+          <BriefingModal
+            isOpen={showBriefing}
+            onClose={() => setShowBriefing(false)}
+            zone={briefingZone || selectedDistrict}
+            period={currentPeriod}
+          />
+        )}
 
-      {/* Command Palette (Ctrl+K) */}
-      <CommandPalette
-        isOpen={showCommandPalette}
-        onClose={() => setShowCommandPalette(false)}
-        districts={dash?.districts || []}
-        onSelectDistrict={handleSelectDistrict}
-        onSelectPeriod={(p) => setCurrentPeriod(p)}
-        onToggleLayer={handleToggleLayer}
-        onOpenTrust={() => setShowTrust(true)}
-        onOpenDemo={() => setShowDemo(true)}
-      />
+        {/* Command Palette (Ctrl+K) */}
+        {showCommandPalette && (
+          <CommandPalette
+            isOpen={showCommandPalette}
+            onClose={() => setShowCommandPalette(false)}
+            districts={dash?.districts || []}
+            onSelectDistrict={handleSelectDistrict}
+            onSelectPeriod={(p) => setCurrentPeriod(p)}
+            onToggleLayer={handleToggleLayer}
+            onOpenTrust={() => setShowTrust(true)}
+            onOpenDemo={() => setShowDemo(true)}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
