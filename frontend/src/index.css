@@ -1,9 +1,5 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
-@source "./App.jsx";
-@source "./components/*.jsx";
-@source "./design/*.jsx";
-@source "./main.jsx";
 
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;

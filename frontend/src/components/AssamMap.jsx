@@ -195,12 +195,30 @@ export default function AssamMap({
   }, [extent, layers.extent, sarOpacity]);
 
   const fitToTopDistricts = () => {
-    if (!mapRef.current || !dash || !dash.districts) return;
-    const topCentroids = dash.districts
+    const map = mapRef.current;
+    if (!map || !dash || !dash.districts) return;
+
+    // Check direct centroids first
+    const directCentroids = dash.districts
       .filter((d) => d.rank <= 5 && d.centroid && d.centroid.length === 2)
       .map((d) => d.centroid);
-    if (topCentroids.length > 0) {
-      mapRef.current.fitBounds(L.latLngBounds(topCentroids), { padding: [40, 40], maxZoom: 9 });
+
+    if (directCentroids.length > 0) {
+      map.fitBounds(L.latLngBounds(directCentroids), { padding: [40, 40], maxZoom: 9 });
+      return;
+    }
+
+    // Fallback to computing bounding box from GeoJSON features for top 5 ranked districts
+    if (dash.geojson && dash.geojson.features) {
+      const topIds = new Set(dash.districts.filter((d) => d.rank <= 5).map((d) => d.id));
+      const topFeatures = dash.geojson.features.filter((f) => {
+        const zid = f.properties?.geometry_id || f.properties?.id;
+        return topIds.has(zid);
+      });
+      if (topFeatures.length > 0) {
+        const bounds = L.geoJSON({ type: "FeatureCollection", features: topFeatures }).getBounds();
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 9 });
+      }
     }
   };
 

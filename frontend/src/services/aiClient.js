@@ -55,11 +55,12 @@ export async function fetchDashboard(period = "2022-06", lead = "1_month", day =
         getStaticJSON("geometry.json")
       ]);
 
-      const districts = (preds.predictions || []).map((p) => ({
-        id: p.geometry_id,
-        geometry_id: p.geometry_id,
-        name: p.district_name || p.geometry_id,
-        district_name: p.district_name || p.geometry_id,
+      const rawList = preds.zones || preds.predictions || preds.ranking || [];
+      const districts = rawList.map((p) => ({
+        id: p.id || p.geometry_id,
+        geometry_id: p.id || p.geometry_id,
+        name: p.name || p.district_name || p.id || p.geometry_id,
+        district_name: p.name || p.district_name || p.id || p.geometry_id,
         rank: p.rank,
         p_mid: p.p_mid,
         p_low: p.p_low,
@@ -69,7 +70,7 @@ export async function fetchDashboard(period = "2022-06", lead = "1_month", day =
         tier: p.priority >= 0.05 ? "HIGH" : p.priority >= 0.02 ? "MODERATE" : "LOW",
         robust: p.robust !== false,
         band_width: p.band_width || p.p_high - p.p_low,
-        drivers: p.drivers || { rain_1m: 350.0, rain_catchment: 420.0, slope: 1.2, river_dist: 4.5 }
+        drivers: p.drivers || { rain_total_mm: 531.0, rain_cum3m_mm: 1487.0, rain_anom_mm: 51.0 }
       }));
 
       return {
@@ -195,6 +196,7 @@ export async function fetchRanking(hazard = "flood", period = "2022-06", lead = 
     const suffix = lead === "1_month" ? "_L1.json" : ".json";
     const predFile = `${prefix}${pStr}${suffix}`;
     const preds = await getStaticJSON(predFile);
+    const rawList = preds.zones || preds.predictions || preds.ranking || [];
     return {
       status: "success",
       hazard,
@@ -203,9 +205,9 @@ export async function fetchRanking(hazard = "flood", period = "2022-06", lead = 
       lead_wording: lead === "1_month" ? "1-Month Risk Outlook" : "Same-Month Risk Assessment",
       label_source: "synthetic_base",
       warning: "OFFLINE DEMO CACHE · Precomputed verified outputs.",
-      ranking: (preds.predictions || []).map((p) => ({
-        geometry_id: p.geometry_id,
-        district_name: p.district_name || p.geometry_id,
+      ranking: rawList.map((p) => ({
+        geometry_id: p.id || p.geometry_id,
+        district_name: p.name || p.district_name || p.id || p.geometry_id,
         rank: p.rank,
         p_mid: p.p_mid,
         p_low: p.p_low,
@@ -214,7 +216,8 @@ export async function fetchRanking(hazard = "flood", period = "2022-06", lead = 
         priority: p.priority,
         tier: p.priority >= 0.05 ? "HIGH" : p.priority >= 0.02 ? "MODERATE" : "LOW",
         robust: p.robust !== false,
-        band_width: p.band_width || p.p_high - p.p_low
+        band_width: p.band_width || p.p_high - p.p_low,
+        drivers: p.drivers
       }))
     };
   }

@@ -5,6 +5,9 @@ import TopBar from "../components/TopBar.jsx";
 import PrioritySidebar from "../components/PrioritySidebar.jsx";
 import TimeScrubber from "../components/TimeScrubber.jsx";
 
+// Configure React 19 testing environment for act(...)
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
 // Sample verified test fixture representing real 33-district model output
 const sampleDistricts = [
   {
