@@ -1,0 +1,5 @@
+[Phase A] Initiating Earth Engine CSV Integration and Validation...
+> [!WARNING]
+> **DEGRADED MODE ACTIVE**: Sentinel-1 flood observations absent
+> Stamping 'PIPELINE CHECK ONLY - no observed-derived labels' across all outputs.
+[Phase A] Wrote secondary synthetic training table: data\processed\training_table_district_month.csv (2520 rows)
