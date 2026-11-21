@@ -39,7 +39,7 @@ export default function TopBar({
       </div>
 
       {/* Hazard Domain Tabs with Honest Status Badges */}
-      <nav className="flex items-stretch h-full gap-1 ml-2">
+      <nav className="flex items-stretch h-full gap-1 ml-2 overflow-x-auto shrink-0 select-none">
         {hazardsList.map((h) => {
           const isSelected = hazard === h.id;
           return (

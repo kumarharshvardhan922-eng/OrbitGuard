@@ -90,9 +90,11 @@ export default function ZoneDrawer({ isOpen, onClose, zone, period = "2022-06", 
             </ul>
           </div>
 
-          <div className="mt-3 pt-2 border-t border-line/40 flex items-center justify-between text-[9px] font-mono text-muted">
-            <span>Confidence: {advisory.confidence}</span>
-            <span>{advisory.disclaimer}</span>
+          <div className="mt-3 pt-2 border-t border-line/40 flex flex-col gap-1 text-[9px] font-mono text-muted">
+            <div className="flex justify-between items-center">
+              <span>Confidence: <b className="text-ink">{advisory.confidence}</b></span>
+            </div>
+            <div className="text-[8px] text-muted tracking-tight">{advisory.disclaimer}</div>
           </div>
         </div>
 
@@ -127,7 +129,7 @@ export default function ZoneDrawer({ isOpen, onClose, zone, period = "2022-06", 
           </div>
 
           <div className="rounded-md border border-line bg-card p-3 space-y-3">
-            {(explain?.top_drivers || [
+            {(explain?.top_drivers || explain?.drivers || [
               { feature: "lag1_severity_index", importance: 0.42, plain_language: "Prior-month riverine saturation carries over strongly into current period." },
               { feature: "upstream_rain_total_mm", importance: 0.28, plain_language: "High transboundary rainfall in the Upper Brahmaputra catchment." },
               { feature: "rain_cum3m_mm", importance: 0.18, plain_language: "90-day cumulative seasonal monsoon precipitation build-up." },

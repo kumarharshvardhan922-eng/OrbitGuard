@@ -173,3 +173,34 @@ button {
     scroll-behavior: auto !important;
   }
 }
+
+/* Official Printable ASDMA Emergency Briefing Document */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #briefing-document, #briefing-document * {
+    visibility: visible !important;
+  }
+  #briefing-document {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 2px solid #0f172a !important;
+    box-shadow: none !important;
+  }
+  #briefing-document * {
+    color: #0f172a !important;
+    background: transparent !important;
+    border-color: #cbd5e1 !important;
+    text-shadow: none !important;
+  }
+  #briefing-document h1, #briefing-document h2, #briefing-document .font-bold {
+    color: #000000 !important;
+  }
+}

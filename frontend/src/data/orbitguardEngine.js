@@ -6,7 +6,7 @@
  * generator. Driver contributions are one-at-a-time ablations against a baseline, not SHAP.
  * Same demo inputs as the backend: illustrative rainfall, exposure and boundaries.
  */
-import SPEC from "./spec.json";
+import SPEC from "./spec.json" with { type: "json" };
 
 const G = SPEC.generator;
 const Z = { p10: -1.2815515655, p90: 1.2815515655 };
