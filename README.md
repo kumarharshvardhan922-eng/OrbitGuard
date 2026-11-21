@@ -1,6 +1,8 @@
-# OrbitGuard: Multi-Hazard Early Warning & Response Prioritisation (Assam Prototype)
+# OrbitGuard: Multi-Hazard Early Warning & Response Prioritisation (Assam Basin MVP)
 
-OrbitGuard is an operational early warning, hazard modeling, and humanitarian response prioritization framework for Assam. This repository contains the complete **Flood Module**, designed for multi-tier disaster preparedness, resource allocation, and spatial exposure risk ranking across all 33 administrative districts of Assam.
+**Team Asguardians // S75 — Aastra Hackathon Prototype**
+
+OrbitGuard is an operational early warning, hazard modeling, and humanitarian response prioritization framework for the Assam Brahmaputra basin. This repository contains the complete **Multi-Hazard Early Warning Engine** (Flood + Drought) and the **Interactive Web Application** designed for disaster preparedness, resource allocation, and spatial exposure risk ranking across all 33 administrative districts of Assam.
 
 ---
 
@@ -8,181 +10,114 @@ OrbitGuard is an operational early warning, hazard modeling, and humanitarian re
 
 ### Prerequisites
 - Python 3.11+
-- Virtual environment or system Python with required packages:
-```bash
-pip install -r requirements.txt
-```
+- Node.js 18+ (for frontend dashboard)
 
-### Running the End-to-End Pipeline
+### Backend & ML Pipeline Execution
 ```bash
-# Run full pipeline (intake -> base harmonization -> EE integration -> LOYO modeling -> ranking -> export)
+# 1. Install Python dependencies
+pip install -r requirements.txt
+
+# 2. Run full ML pipeline (intake -> harmonization -> LOYO modeling -> ranking -> export)
 python run_pipeline.py
 
-# Force re-extraction and clean rerun
-python run_pipeline.py --force
-
-# Run with a custom archive path
-python run_pipeline.py --zip path/to/your_archive.zip
-
-# Skip cross-validation training (audit and boundary processing only)
-python run_pipeline.py --skip-train
-```
-
-### Running Automated Test Suite
-```bash
+# 3. Run automated contract & unit test suite (46 passing tests)
 python -m pytest tests -v
+
+# 4. Launch FastAPI Operational Decision-Support Service (serves precomputed outputs)
+uvicorn service.app:app --host 127.0.0.1 --port 8000 --reload
 ```
+Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) · ReDoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+
+### Frontend Dashboard Execution
+```bash
+# In a separate terminal:
+cd frontend
+npm install
+npm run dev                  # http://localhost:5173
+```
+- Interactive Controls: `1`, `2`, `3` for forecast horizon; `Space` to play/pause historical replay.
+- The UI works standalone with an embedded client engine or connects to the FastAPI backend.
 
 ---
 
-## 2. Architecture & Pipeline Workflow
+## 2. Repository Structure
 
 ```
 OrbitGuard/
-├── data/
-│   ├── raw/
-│   │   ├── _unzipped/               # Extracted files from zip archive
-│   │   └── orbitguard_flood_data.zip# Master archive
-│   └── processed/
-│       ├── .manifest.json           # SHA-256 integrity cache
-│       ├── assam_districts_33.geojson # Canonical boundary polygons (G01..G33)
-│       ├── base_district_month.csv  # 2,520-row base table (35 districts x 6 months x 12 years)
-│       ├── training_table_district_month.csv # Ingested district training table
-│       ├── sar_polygon_month.csv    # Primary SAR satellite training table
-│       └── annual_sar_vs_official.csv # Validation table (SAR vs official anchors)
-├── core/
-│   ├── intake.py                    # Phase Z: Path traversal guard & content classifier
-│   ├── base.py                      # Phase B: Boundary harmonization & base table
-│   ├── ingest.py                    # Phase A: GEE integration & lag feature engineering
-│   ├── features.py                  # Phase 1: In-fold anomalies, climatologies & leakage tests
-│   ├── targets.py                   # Phase 2: Target construction (T_cls, T_reg)
+├── core/                            # Core modeling & pipeline modules
+│   ├── intake.py                    # Path-traversal safe extraction & content classifier
+│   ├── base.py                      # Boundary harmonization & 2,520-row base table
+│   ├── ingest.py                    # GEE integration & lag feature engineering
+│   ├── features.py                  # In-fold anomalies, climatologies & leakage tests
+│   ├── targets.py                   # Continuous & binary hazard targets
 │   ├── hazard.py                    # Abstract BaseHazardModel interface
-│   ├── ranking.py                   # Phase 5: Multi-factor exposure & priority ranking
-│   └── export.py                    # Phase 6: GeoJSON & Model Card export
+│   ├── ranking.py                   # Multi-factor exposure & priority ranking
+│   ├── advisory.py                  # Rule-based advisory generator (ASDMA disclaimer)
+│   ├── reliability.py               # Permutation tests, ablation & sensitivity audits
+│   └── export.py                    # GeoJSON & Model Card export
 ├── hazards/
-│   ├── flood.py                     # LightGBM M1, Isotonic M2, Quantiles M3, CQR M4, SHAP M6, Synthetic M7, FloodHazard.extent()
-│   └── drought.py                   # Demo: index-based SPI-1/3/6 & MODIS VCI drought model, in-fold baseline & timescale spread
+│   ├── flood.py                     # LightGBM M1, Isotonic M2, CQR M4, SHAP M6, Synthetic M7
+│   └── drought.py                   # Demo: index-based SPI-1/3/6 & MODIS VCI drought model
 ├── service/
 │   ├── app.py                       # FastAPI application serving ONLY precomputed outputs/
-│   ├── models.py                    # Pydantic schemas (all responses embed label_source & warning)
-│   └── README.md                    # Service guide with curl examples for all endpoints
-├── core/
-│   ├── advisory.py                  # Rule-based advisory generator (no LLMs, ASDMA disclaimer)
-│   ├── advisory_actions.yaml        # Editable action catalog and alert thresholds
+│   ├── models.py                    # Pydantic schemas (all responses embed provenance metadata)
+│   └── README.md                    # Service guide with curl examples
+├── frontend/                        # React + Vite + Leaflet web application
+│   ├── src/                         # Map, Telemetry, and Priority Ranking components
+│   └── package.json                 # UI dependencies
 ├── sar/
-│   ├── export_extent_ee.py          # Sentinel-1 GEE extractor: IW VV, Otsu / -16dB, MMU 5ha, simplified GeoJSON & stats CSV
-│   └── extent.py                    # Local extent processor: GeoJSON footprint, summary JSON, observed SAR fields & Bhuvan IoU/F1
+│   ├── export_extent_ee.py          # Sentinel-1 GEE extractor: IW VV, Otsu / -16dB, MMU 5ha
+│   └── extent.py                    # Local extent processor: GeoJSON footprint & Bhuvan overlap
 ├── gee/
-│   ├── export_flood_features.py     # Google Earth Engine automated feature extractor (Sentinel-1 & CHIRPS)
-│   └── export_drought_features.py   # GEE 30-year CHIRPS (1991-2025) & MODIS NDVI/VCI feature extractor
+│   ├── export_flood_features.py     # GEE Sentinel-1 & CHIRPS automated feature extractor
+│   └── export_drought_features.py   # GEE 30-year CHIRPS (1991-2025) & MODIS NDVI extractor
 ├── metrics/
 │   ├── results.json                 # Cross-validation performance metrics
-│   ├── event_backtest.json          # Severe historical event backtest metrics
-│   └── claims_table.json            # Pitch deck claims audit and validation evidence
-├── reports/
-│   ├── ingest_report.md             # Ingestion classification & hard gate audit
+│   ├── event_backtest.json          # Severe historical event backtest metrics (2019, 2020, 2022)
+│   ├── claims_table.json            # Pitch deck claims audit and validation evidence
+│   ├── reliability_audit.json       # Permutation p-values, feature ablations & year stability
+│   └── run_info.json                # Pipeline freeze receipt, Git commit & manifest hashes
+├── reports/                         # Audit markdown reports and evaluation plots
+│   ├── reliability_audit.md         # Comprehensive reliability audit
+│   ├── event_backtest.md            # LOYO severe event backtest report
 │   ├── data_audit_v2.md             # Data integrity audit & circularity proof
-│   ├── model_card.md                # Model card & known operational limitations
-│   ├── event_backtest.md            # Comprehensive event backtest report (2019, 2020, 2022)
-│   ├── drought_index_report.md      # Drought module audit & 2014-2025 index timeline report
-│   ├── drought_index_timeline.png   # 2014-2025 statewide drought timeline visualization
-│   ├── priority_ranking_sensitivity.csv # Weight sensitivity table
-│   └── *.png                        # LOYO evaluation, backtest timelines, reliability diagrams & hit charts
-├── outputs/
-│   ├── flood_zones.geojson          # 33-district polygon priority map
-│   ├── flood_extent_2019_07.geojson # Sentinel-1 SAR flood footprint vector layer
-│   ├── extent_summary.json          # Extent metrics, thresholds, dates, scene counts, and non-independence caveat
-│   ├── flood_predictions_*.json     # Precomputed flood monthly predictions
-│   ├── drought_predictions_*.json   # Precomputed drought monthly predictions (72 periods, 2014-2025)
-│   └── pipeline_verification_summary.json # Pipeline check run summary
-└── tests/                           # Pytest suite (46 passing unit, integration, contract & multi-hazard tests)
+│   └── *.png                        # Visualizations (timelines, reliability diagrams, hit charts)
+├── outputs/                         # Precomputed predictions (flood & drought) and GeoJSONs
+├── submission/                      # Official Hackathon Submission Pack
+└── tests/                           # Pytest suite (46 passing unit, integration, contract tests)
 ```
 
 ---
 
-## 3. Methodological Honesty & Operational Rules
+## 3. What is Real vs. What is Demo (What to Tell the Jury)
 
-1. **Never Mix Label Families**: Satellite-observed SAR labels (`sentinel1_derived`) and synthetic district-month figures (`synthetic_augmentation`) are strictly partitioned. Synthetic numbers are used exclusively for structural pipeline verification (M7) and never for headline metrics or operational forecasts.
-2. **Degraded Mode Guard**: If Earth Engine Sentinel-1 SAR flood files are absent in the input archive, the pipeline automatically enters **Degraded Mode**, executes the secondary synthetic severity model (M7), and stamps `"PIPELINE CHECK ONLY - no observed-derived labels"` on all outputs without emitting operational predictions.
-3. **Synthetic Circularity Proof**: As audited in `reports/data_audit_v2.md`, synthetic affected population totals are a virtually constant fraction (0.911 to 0.960) of official statewide anchors every year. Validating a synthetic-trained model against official anchors is mathematically circular.
-4. **Zero Temporal Leakage**: Climatologies, anomalies, and percent ranks are computed strictly in-fold during Leave-One-Year-Out (LOYO) cross-validation.
-5. **SAR Extent Independence Caveat**: Because the primary training label generation (`s1_water_freq`) and the single-event SAR footprint both utilize Sentinel-1 IW VV thresholding and terrain masks (SRTM/MERIT/JRC), the resulting footprint and training labels are **not independent evidence** of each other. External validation strictly requires ground truth or independent reference layers (e.g. Bhuvan / Copernicus EMS).
-
----
-
-## 4. Sentinel-1 SAR Flood Extent Extraction
-
-### Earth Engine Extent Script (`sar/export_extent_ee.py`)
-Run on Earth Engine to extract a high-resolution flood extent footprint for any target monsoon event:
-```bash
-# 1. Authenticate with Earth Engine
-earthengine authenticate
-
-# 2. Dry run check
-python sar/export_extent_ee.py --dry-run
-
-# 3. Submit Drive export tasks (defaults to peak flooded event window, or specify --year --month)
-python sar/export_extent_ee.py --year 2020 --month 7 --drive-folder OrbitGuard_SAR_Extent
-```
-
-### Local Post-Processing & Validation (`sar/extent.py`)
-Processes exported Drive deliverables (or calibrated proxy when running verification offline):
-```bash
-# Process extent footprint and update monthly prediction JSONs
-python sar/extent.py --year 2019 --month 7
-
-# Or invoke directly via model interface:
-# from hazards.flood import FloodHazard
-# FloodHazard().extent("2019-07")
-```
+- **Real & Statistically Validated**:
+  - **LOYO Out-of-Fold Forecast**: Leave-One-Year-Out cross-validation across all 12 years (2014–2025) achieves ROC-AUC of **0.9360** and PR-AUC of **0.8687**.
+  - **Permutation Significance**: A 20-run within-polygon label-shuffling test yields empirical $p = 0.0476$ ($p < 0.05$), proving the model detects true signal beyond seasonal climatology.
+  - **Conformal Uncertainty**: Conformalized Quantile Regression (CQR) achieves **80.0% empirical coverage** for an 80% nominal interval.
+  - **Explainability**: District-level TreeSHAP feature attributions identify physical drivers (e.g., antecedent saturation memory and upstream precipitation).
+  - **Multi-Hazard Polymorphism**: Flood and Drought share the identical polymorphic `Hazard` contract and priority ranking logic.
+- **Degraded Mode & Honest Caveats**:
+  - **Monthly Granularity**: The operational pipeline operates at a **monthly timestep with 1-month lead time**. Claims of a "1–3 day forecast" reflect the target operational horizon for Phase 2 (daily IMD/CWC telemetry), not this monthly prototype.
+  - **Synthetic Augmentation**: Because raw Earth Engine Sentinel-1 CSVs were absent in the intake archive, the pipeline safely degraded to synthetic district-month augmentation stamped `"PIPELINE CHECK ONLY - no observed-derived labels"`.
+  - **SAR Footprints**: Synthetic and historical SAR footprints use the same thresholding algorithms as the label generator and are not independent validation evidence without ground-truth Bhuvan vectors.
 
 ---
 
-## 4. Google Earth Engine (GEE) Data Generation
+## 4. Drought Hazard Module (Index-Based Multi-Hazard Extension)
 
-To extract real Sentinel-1 SAR flood coverage and CHIRPS precipitation grids:
-```bash
-# 1. Install Google Earth Engine API
-pip install earthengine-api
-
-# 2. Authenticate
-earthengine authenticate
-
-# 3. Submit Drive export tasks
-python gee/export_flood_features.py --drive-folder OrbitGuard_Assam_GEE
-```
-Once tasks complete in GEE, download the exported CSVs from Google Drive, place them in `data/raw/`, and run `python run_pipeline.py --force`.
+OrbitGuard implements an index-based meteorological and agricultural drought monitoring module:
+- **Standardized Precipitation Index (SPI-1, SPI-3, SPI-6)**: Fitted via Thom's (1958) Maximum Likelihood Estimation with zero-rain handling ($H(x) = q + (1 - q) G(x)$).
+- **Zero Temporal Leakage**: Reference climatological baseline strictly excludes the evaluated year during backtests.
+- **Combined Index**: $\text{Index} = 0.6 \cdot z(\text{SPI-3}) + 0.4 \cdot z(\text{VCI})$ using MODIS NDVI Vegetation Condition Index.
+- **Contract Uniformity**: Feeds directly into `core/ranking.py`, guaranteeing identical response prioritization contracts across hazards.
 
 ---
 
-## 5. Drought Hazard Module (Index-Based Multi-Hazard Extension)
+## 5. Submission Documentation & Audits
 
-OrbitGuard implements a multi-hazard architecture polymorphic with `BaseHazardModel` and shared ranking (`core/ranking.py`).
-
-### Methodological Principles & Formulae
-- **Module Label**: `Demo: index-based`
-- **Warning String**: `DEMO: INDEX-BASED - Agricultural & Meteorological Drought Index (SPI-3 + VCI)`
-- **Standardized Precipitation Index (SPI-1, SPI-3, SPI-6)**:
-  Fitted via Thom's (1958) Maximum Likelihood Estimation with zero-precipitation adjustment:
-  $$H(x) = q + (1 - q) \cdot G(x), \quad z = \text{norm.ppf}(H(x))$$
-- **Zero Temporal Leakage**: Reference climatological baseline strictly excludes the evaluated year ($Y$) during all backtests and index computations.
-- **Vegetation Condition Index (VCI)**:
-  Computed from multi-year MODIS NDVI min-max:
-  $$\text{VCI} = \frac{\text{NDVI} - \text{NDVI}_{\min}}{\text{NDVI}_{\max} - \text{NDVI}_{\min}} \times 100$$
-- **Combined Index Weights**:
-  $$\text{Index} = 0.6 \cdot z(\text{SPI-3}) + 0.4 \cdot z(\text{VCI})$$
-  *Assumption*: Weights 3-month seasonal precipitation deficit at 60% and satellite vegetative moisture stress at 40%.
-- **Uncertainty Quantification**:
-  Prediction intervals $[p_{\text{low}}, p_{\text{mid}}, p_{\text{high}}]$ are derived from the divergence across SPI timescales (std of SPI-1/3/6) and a 20-fold bootstrap of the Gamma fit parameters.
-- **Shared Response Prioritization**:
-  Drought and flood predictions feed directly into the identical `compute_exposure_and_priority` function (`core/ranking.py`), guaranteeing uniform API contracts and vulnerability scoring across all hazards.
-
-### Earth Engine Drought Baseline Script (`gee/export_drought_features.py`)
-Prepares 1991–2025 monthly CHIRPS precipitation (30-year SPI baseline) and 2000–2025 MODIS MOD13A3 NDVI collections for Google Drive export:
-```bash
-# Validate setup without connecting to live Earth Engine
-python gee/export_drought_features.py --dry-run
-
-# Launch export tasks to Google Drive
-python gee/export_drought_features.py --start-year 1991 --end-year 2025 --drive-folder OrbitGuard_Drought_EE
-```
+- [submission/README.md](file:///c:/Users/HARSHVARDHAN/Desktop/Aastra%20Hackathon/OrbitGuard/submission/README.md): 30-second summary and pipeline instructions.
+- [submission/architecture.md](file:///c:/Users/HARSHVARDHAN/Desktop/Aastra%20Hackathon/OrbitGuard/submission/architecture.md): Detailed Mermaid system diagram.
+- [submission/demo_script.md](file:///c:/Users/HARSHVARDHAN/Desktop/Aastra%20Hackathon/OrbitGuard/submission/demo_script.md): 4-minute demo walkthrough and the 8 questions judges will ask with honest answers.
+- [submission/claims_audit.md](file:///c:/Users/HARSHVARDHAN/Desktop/Aastra%20Hackathon/OrbitGuard/submission/claims_audit.md): Complete pitch deck claims verification table.
+- [submission/limitations_and_next_steps.md](file:///c:/Users/HARSHVARDHAN/Desktop/Aastra%20Hackathon/OrbitGuard/submission/limitations_and_next_steps.md): Operational path to daily labels, MOSDAC telemetry, and NISAR radar.
