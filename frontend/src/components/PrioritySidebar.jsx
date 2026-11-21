@@ -149,7 +149,10 @@ export default function PrioritySidebar({
 
                   <div className="text-[10px] text-muted font-mono mt-0.5">
                     Exposure: <span className="text-dim font-bold">{d.exposure.toFixed(2)}</span> · P-Mid:{" "}
-                    <span className="text-cyan font-bold">{(d.p_mid * 100).toFixed(1)}%</span>
+                    <span className="text-cyan font-bold">{(d.p_mid * 100).toFixed(1)}%</span>{" "}
+                    <span className="text-[9px] text-dim font-normal" title="80% Conformal Prediction Interval">
+                      [{(d.p_low * 100).toFixed(1)}%–{(d.p_high * 100).toFixed(1)}%]
+                    </span>
                   </div>
                 </div>
 
