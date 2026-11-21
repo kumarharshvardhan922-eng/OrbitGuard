@@ -13,10 +13,17 @@ from service.app import (
     get_periods,
     get_zones,
     get_ranking,
+    get_advisories,
     get_explain,
     get_extent,
+    get_geometry,
+    get_timeline,
+    get_overview,
     get_metrics,
-    get_provenance
+    get_provenance,
+    api_health,
+    api_dashboard,
+    api_flood_extent
 )
 from core.advisory import determine_advisory_level, determine_confidence, generate_zone_advisory
 
@@ -260,3 +267,83 @@ def test_advisory_rule_levels():
 
     # Normal: none exceed threshold
     assert determine_advisory_level(p_low=0.005, p_mid=0.02, p_high=0.04, threshold=0.05) == "Normal"
+
+
+def test_endpoint_advisories():
+    """GET /advisories returns all 33 zone advisories with mandatory disclaimer."""
+    resp = get_advisories(hazard="flood", period="2022-06", lead="1_month")
+    assert resp.hazard == "flood"
+    assert resp.period == "2022-06"
+    assert len(resp.advisories) == 33
+    for item in resp.advisories:
+        assert item.zone_id.startswith("G")
+        assert item.advisory.level in ("Severe", "Warning", "Watch", "Normal")
+        assert "Decision support only" in item.advisory.disclaimer
+        assert len(item.advisory.recommended_actions) >= 1
+    assert len(resp.label_source) > 0
+    assert len(resp.warning) > 0
+
+
+def test_endpoint_geometry():
+    """GET /geometry serves canonical 33-district polygon GeoJSON."""
+    geom = get_geometry(hazard="flood")
+    assert geom["type"] == "FeatureCollection"
+    features = geom.get("features", [])
+    assert len(features) == 33
+    for f in features:
+        assert "geometry" in f
+        assert "properties" in f
+        assert "geometry_id" in f["properties"] or "district" in f["properties"]
+    assert "label_source" in geom
+    assert "warning" in geom
+
+
+def test_endpoint_timeline():
+    """GET /timeline serves historical progression across periods."""
+    # 1. District timeline
+    tl_district = get_timeline(zone_id="G09", hazard="flood")
+    assert tl_district.zone_id == "G09"
+    assert tl_district.district_name == "Dhemaji"
+    assert len(tl_district.timeline) >= 12
+    for item in tl_district.timeline:
+        assert item.p_low <= item.p_mid <= item.p_high
+        assert item.priority >= 0.0
+
+    # 2. Statewide timeline
+    tl_state = get_timeline(zone_id=None, hazard="flood")
+    assert "Statewide" in tl_state.district_name
+    assert len(tl_state.timeline) >= 12
+
+
+def test_endpoint_overview():
+    """GET /overview returns active alerts count and summary exposure."""
+    resp = get_overview(hazard="flood", period="2022-06", lead="1_month")
+    assert resp.hazard == "flood"
+    assert resp.period == "2022-06"
+    assert resp.active_alerts_total >= 0
+    assert resp.severe_alerts_count + resp.warning_alerts_count + resp.watch_alerts_count + resp.normal_count == 33
+    assert len(resp.top_priority_district) > 0
+    assert resp.statewide_mean_risk >= 0.0
+    assert len(resp.top_5_robust) <= 5
+    assert len(resp.label_source) > 0
+    assert len(resp.warning) > 0
+
+
+def test_frontend_compatibility_endpoints():
+    """Verify /api/* adapter endpoints work seamlessly for web frontend."""
+    # Health
+    h = api_health()
+    assert h["status"] == "ok"
+    assert h["engine"] == "fastapi-lgbm"
+
+    # Dashboard
+    dash = api_dashboard(period="2022-06", lead="1_month")
+    assert dash["engine"] == "fastapi-lgbm"
+    assert len(dash["districts"]) == 33
+    assert dash["geojson"]["type"] == "FeatureCollection"
+    assert dash["summary"]["alerts"] >= 0
+
+    # Flood Extent
+    ext = api_flood_extent(period="2019-07")
+    assert ext["type"] == "FeatureCollection"
+

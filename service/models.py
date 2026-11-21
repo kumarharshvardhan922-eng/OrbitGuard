@@ -5,27 +5,32 @@ from pydantic import BaseModel, Field
 
 
 class BaseProvenanceResponse(BaseModel):
-    """Base model enforcing label_source and warning string embedding."""
+    """Base model enforcing status, label_source and warning string embedding."""
+    status: str = Field("ok", description="Response status ('ok', 'degraded', 'mock')")
     label_source: str = Field(..., description="Label family used: 'synthetic_augmentation' or 'sentinel1_derived'")
     warning: str = Field(..., description="Operational honesty and data caveat warning string")
 
 
 class HealthResponse(BaseProvenanceResponse):
     """Service health status response."""
-    status: str = Field("healthy", description="Service health state")
     service: str = Field("orbitguard-early-warning-service", description="Service identifier")
     version: str = Field("1.0.0", description="Semantic API version")
+    data_mode: str = Field("live", description="Active data mode ('live' or 'mock')")
+    validated_files_count: int = Field(0, description="Count of validated precomputed output files")
     timestamp: str = Field(..., description="ISO 8601 UTC timestamp")
 
 
 class HazardItem(BaseModel):
-    """Hazard domain descriptor."""
+    """Hazard domain descriptor with honest validation status."""
     id: str = Field(..., examples=["flood"])
     name: str = Field(..., examples=["Riverine & Flash Inundation"])
+    status_badge: str = Field(..., description="Honest badge: 'Operational Prototype', 'Demo: Index-Based', or 'Planned - no data yet'")
     description: str = Field(..., examples=["Multi-hazard early warning and response prioritization for Assam"])
     granularity: str = Field("month", examples=["month"])
     lead_times: List[str] = Field(default_factory=lambda: ["0_month", "1_month"])
+    lead_wording: str = Field("1-Month Risk Outlook", description="Approved lead phrasing derived from metrics")
     spatial_units: int = Field(33, description="Number of administrative polygon units")
+    has_outputs: bool = Field(True, description="Whether precomputed output predictions exist")
 
 
 class HazardsResponse(BaseProvenanceResponse):
@@ -82,6 +87,7 @@ class ZonesResponse(BaseProvenanceResponse):
     granularity: str
     period: str
     lead: str
+    lead_wording: str
     zones: List[ZoneItem]
 
 
@@ -90,8 +96,26 @@ class RankingResponse(BaseProvenanceResponse):
     hazard: str
     period: str
     lead: str
+    lead_wording: str
     ranking: List[ZoneItem]
     top_5_robust: List[str] = Field(..., description="List of district names with robust high-priority ranking")
+
+
+class ZoneAdvisoryItem(BaseModel):
+    """District advisory pairing."""
+    zone_id: str
+    district_name: str
+    priority: float
+    rank: int
+    advisory: AdvisoryModel
+
+
+class AdvisoriesResponse(BaseProvenanceResponse):
+    """Full operational advisory collection for all districts."""
+    hazard: str
+    period: str
+    lead: str
+    advisories: List[ZoneAdvisoryItem]
 
 
 class DriverExplanation(BaseModel):
@@ -108,6 +132,43 @@ class ExplainResponse(BaseProvenanceResponse):
     district: str
     period: str
     top_drivers: List[DriverExplanation]
+
+
+class TimelineItem(BaseModel):
+    """Monthly progression item for risk and precipitation."""
+    period: str
+    p_low: float
+    p_mid: float
+    p_high: float
+    priority: float
+    rank: int
+    rain_total_mm: Optional[float] = None
+    rain_cum3m_mm: Optional[float] = None
+    rain_anom_mm: Optional[float] = None
+
+
+class TimelineResponse(BaseProvenanceResponse):
+    """Multi-period trajectory for a district or statewide aggregate."""
+    zone_id: Optional[str] = None
+    district_name: Optional[str] = None
+    hazard: str
+    timeline: List[TimelineItem]
+
+
+class OverviewResponse(BaseProvenanceResponse):
+    """High-level summary of active alerts and statewide exposure."""
+    hazard: str
+    period: str
+    lead: str
+    lead_wording: str
+    active_alerts_total: int
+    severe_alerts_count: int
+    warning_alerts_count: int
+    watch_alerts_count: int
+    normal_count: int
+    top_priority_district: str
+    statewide_mean_risk: float
+    top_5_robust: List[str]
 
 
 class MetricsResponse(BaseProvenanceResponse):
