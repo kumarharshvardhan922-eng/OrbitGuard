@@ -20,7 +20,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = "max-w-2xl"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -61,7 +61,7 @@ export function Drawer({ isOpen, onClose, title, subtitle = null, children, widt
     <aside
       role="dialog"
       aria-modal="true"
-      className={`fixed top-[58px] right-0 bottom-0 z-40 ${width} max-w-full border-l border-line bg-panel/95 backdrop-blur-md shadow-2xl flex flex-col transition-transform duration-300 ${className}`}
+      className={`fixed top-[58px] right-0 bottom-0 z-[8000] ${width} max-w-full border-l border-line bg-panel/95 backdrop-blur-md shadow-2xl flex flex-col transition-transform duration-300 ${className}`}
     >
       <div className="flex items-start justify-between border-b border-line px-5 py-3.5 bg-card/60">
         <div>

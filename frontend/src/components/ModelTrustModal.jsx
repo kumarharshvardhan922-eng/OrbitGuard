@@ -77,7 +77,7 @@ export default function ModelTrustModal({ isOpen, onClose }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Model Trust, Audit & Deck Claims Verification" maxWidth="max-w-4xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="Model Trust, Audit & Deck Claims Verification" maxWidth="max-w-5xl">
       <div className="flex flex-col gap-6 text-xs text-ink font-sans">
         {/* Banner */}
         <div className="rounded-md border border-cyan/40 bg-cyan/10 p-4 flex items-start gap-3">
@@ -100,20 +100,20 @@ export default function ModelTrustModal({ isOpen, onClose }) {
             <FileText className="w-4 h-4 text-cyan" />
             Pitch Deck Claims Audit Table
           </h3>
-          <div className="rounded-md border border-line bg-card overflow-hidden">
-            <table className="w-full text-left border-collapse">
+          <div className="rounded-md border border-line bg-card overflow-x-auto shadow-inner">
+            <table className="w-full min-w-[700px] text-left border-collapse">
               <thead>
-                <tr className="border-b border-line bg-elevated/80 font-mono text-[10px] text-dim uppercase">
-                  <th className="py-2.5 px-3">Pitch Claim</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3">Evidence & Verified Numbers</th>
-                  <th className="py-2.5 px-3">Evidence File</th>
+                <tr className="border-b border-line bg-elevated/90 font-mono text-[10px] text-dim uppercase">
+                  <th className="py-2.5 px-3 w-[28%]">Pitch Claim</th>
+                  <th className="py-2.5 px-3 w-[18%]">Status</th>
+                  <th className="py-2.5 px-3 w-[34%]">Evidence & Verified Numbers</th>
+                  <th className="py-2.5 px-3 w-[20%]">Evidence File</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line text-[11px]">
                 {Object.entries(claims).map(([key, val]) => (
                   <tr key={key} className="hover:bg-elevated/40 transition-colors">
-                    <td className="py-3 px-3 font-semibold text-ink">{val.claim}</td>
+                    <td className="py-3 px-3 font-semibold text-ink leading-snug">{val.claim}</td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-1.5">
                         {getStatusIcon(val.status)}
@@ -122,7 +122,7 @@ export default function ModelTrustModal({ isOpen, onClose }) {
                         </Badge>
                       </div>
                     </td>
-                    <td className="py-3 px-3 font-mono text-[10px] text-dim">
+                    <td className="py-3 px-3 font-mono text-[10px] text-dim leading-snug">
                       {val.number ? (
                         <span className="text-ink font-bold">{val.number}</span>
                       ) : (

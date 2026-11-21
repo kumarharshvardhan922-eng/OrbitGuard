@@ -73,7 +73,7 @@ export default function CommandPalette({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-start justify-center pt-24 p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-start justify-center pt-24 p-4 bg-black/80 backdrop-blur-md animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full max-w-xl rounded-lg border border-cyan/40 bg-panel shadow-2xl overflow-hidden flex flex-col font-sans">

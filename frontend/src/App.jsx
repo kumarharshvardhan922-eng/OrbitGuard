@@ -308,7 +308,7 @@ export default function App() {
           <div className="flex-1 relative min-h-0 bg-[#070c18]">
             {/* Planned Hazard Informational Screen */}
             {["landslide", "cyclone", "wildfire"].includes(hazard) ? (
-              <div className="absolute inset-0 z-[400] flex flex-col items-center justify-center p-8 text-center bg-canvas/95 backdrop-blur-sm">
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 text-center bg-canvas/95 backdrop-blur-sm">
                 <div className="w-16 h-16 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center mb-4 text-slate-400">
                   <Shield className="w-8 h-8" />
                 </div>
@@ -348,7 +348,7 @@ export default function App() {
 
             {/* Inset HUD: Layer Toggles & SAR Opacity Slider (Bottom Right) */}
             {!["landslide", "cyclone", "wildfire"].includes(hazard) && (
-              <div className="absolute bottom-4 right-4 z-[500] bg-panel/95 backdrop-blur border border-line p-3 w-[230px] rounded shadow-2xl font-mono text-xs select-none">
+              <div className="absolute bottom-4 right-4 z-20 bg-panel/95 backdrop-blur border border-line p-3 w-[230px] rounded shadow-2xl font-mono text-xs select-none">
                 <div className="flex items-center justify-between border-b border-line pb-1.5 mb-2">
                   <span className="lbl text-ink font-bold flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-cyan" />
@@ -435,7 +435,7 @@ export default function App() {
             )}
 
             {/* Quick Status Pill (Bottom Left) */}
-            <div className="absolute bottom-4 left-4 z-[500] text-[10px] font-mono tracking-wider text-dim bg-panel/90 backdrop-blur border border-line px-2.5 py-1 rounded flex items-center gap-2">
+            <div className="absolute bottom-4 left-4 z-20 text-[10px] font-mono tracking-wider text-dim bg-panel/90 backdrop-blur border border-line px-2.5 py-1 rounded flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>ASSAM STATE DISASTER MANAGEMENT AUTHORITY (ASDMA) · 33 DISTRICTS</span>
             </div>
