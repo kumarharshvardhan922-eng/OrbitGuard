@@ -2,19 +2,32 @@
  * OrbitGuard Web Client API Service (frontend/src/services/aiClient.js).
  * ======================================================================
  * Strict Honesty Rule:
- * - When FastAPI backend is online, fetches live outputs from localhost:8000.
- * - When backend is unreachable (offline static demo), falls back to verified
+ * - When VITE_API_BASE is set, fetches live outputs from the deployed FastAPI backend.
+ * - When backend is unreachable (or VITE_API_BASE is unset), falls back to verified
  *   precomputed static outputs from /data/ with explicit status='static_offline_cache'.
  * - In explicit MOCK data mode, embeds status='mock' and unmissable warning.
  * - Never fabricates or hallucinates numbers.
+ *
+ * Environment variables (set in Vercel project settings, never commit secrets):
+ *   VITE_API_BASE   – Full URL of deployed FastAPI backend, e.g. https://api.example.com
+ *                     Leave blank / unset to run fully offline from static precomputed cache.
+ *   VITE_DATA_MODE  – "live" (default) or "mock" (forces local engine).
  */
 
 import { localDashboard, localExtent, localHealth } from "../data/orbitguardEngine.js";
 
 const env = (typeof import.meta !== "undefined" && import.meta?.env) ? import.meta.env : (typeof process !== "undefined" && process?.env) ? process.env : {};
-const BASE = env.VITE_API_BASE || "http://127.0.0.1:8000";
+
+// If VITE_API_BASE is not set we use an empty string so fetch attempts fail
+// immediately with a network error (caught below), triggering the static-cache fallback.
+// In local development the vite dev server proxies nothing, so we fall back to 127.0.0.1:8000
+// ONLY when explicitly running locally (not in a production Vercel build).
+const _apiBase = env.VITE_API_BASE || "";
+const _isLocalDev = typeof import.meta !== "undefined" && import.meta?.env?.DEV === true;
+const BASE = _apiBase || (_isLocalDev ? "http://127.0.0.1:8000" : "");
+
 const IS_LIVE_MODE = (env.VITE_DATA_MODE || "live").toLowerCase() !== "mock";
-const TIMEOUT_MS = 2500;
+const TIMEOUT_MS = 4000;
 
 async function getJSON(path, params = {}) {
   const ctrl = new AbortController();
