@@ -95,12 +95,18 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable CORS for all origins
+# CORS: allow_credentials=True is incompatible with allow_origins=["*"] per the CORS spec.
+# We read ALLOWED_ORIGINS from the environment so production can list the exact Vercel domain.
+# Default "*" is correct for local dev; on the deployed backend set ALLOWED_ORIGINS appropriately.
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", "*")
+_allow_origins: list = ["*"] if _raw_origins.strip() == "*" else [o.strip() for o in _raw_origins.split(",")]
+_allow_credentials: bool = _allow_origins != ["*"]  # credentials only allowed with explicit origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=_allow_origins,
+    allow_credentials=_allow_credentials,
+    allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],
 )
 

@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "comment": "OrbitGuard – Vercel deploys the React+Vite frontend ONLY. The FastAPI backend must be hosted separately (e.g. Railway, Render, or a VPS). Set VITE_API_BASE in Vercel Environment Variables to point to the live backend URL.",
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/((?!data/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    }
+  ]
+}

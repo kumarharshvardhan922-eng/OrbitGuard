@@ -1,0 +1,7 @@
+# OrbitGuard FastAPI service – minimal runtime dependencies only.
+# This file installs only what service/app.py and core/advisory.py need.
+# Heavy ML libs (lightgbm, geopandas, etc.) are only needed to RE-TRAIN; the
+# service reads ONLY precomputed JSON files from outputs/ at runtime.
+fastapi==0.141.1
+uvicorn==0.52.1
+PyYAML==6.0.4
